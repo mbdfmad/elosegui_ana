@@ -1,0 +1,205 @@
+---
+title: "Práctica 0. FMAD 2021-2022"
+subtitle: "ICAI. Master en Big Data. Fundamentos Matemáticos del Análisis de Datos (FMAD)."
+author: "Elósegui Ana"
+date: 'Curso 2021-22. Última actualización: `r format(Sys.time(), "%Y-%m-%d")`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Ejercicio 0 (ejemplo).
+
+**Enunciado:** Usa la función `seq` de R para fabricar un vector `v` con los múltiplos de 3 del 0 al 300. Muestra los primeros 20 elementos de `v` usando `head` y calcula:
+
++ la suma del vector `v`,
++ su media,
++ y su longitud.
+
+**Respuesta:**
+
+```{r}
+v = seq(from = 0, to = 300, by = 3)
+head(v, 20)
+```
+
+Suma de `v`
+```{r}
+sum(v)
+```
+
+Media:
+```{r}
+mean(v)
+```
+
+Longitud:
+```{r}
+length(v)
+```
+
+
+
+# Preliminares
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(haven)
+```
+
+
+
+# Ejercicio 1
+
+Se crea el vector dado_honesto y se imprimen los 10 primeros valores.
+```{r}
+dado_honesto <- sample(1:6, 100, replace=TRUE)
+head(dado_honesto, 10)
+```
+Se calculan la frecuencias absolutas de cada valor utilizando dos funciones diferentes.
+```{r}
+freqabs1 <- table(dado_honesto)
+freqabs1
+```
+```{r}
+freqabs2 <- as.data.frame(dado_honesto)
+freqabs2 %>% 
+  count(dado_honesto)
+```
+Se calculan la frecuencias relativas de cada valor. 
+```{r}
+freqabs2 %>% 
+  count(dado_honesto) %>%
+  mutate(dado_honesto, relFreq = prop.table(n), n=NULL) 
+```
+
+
+
+# Ejercicio 2
+
+Se crea el vector dado_cargado y se imprimen los 10 primeros valores.
+```{r}
+dado_cargado <- sample(1:6, 100, replace=TRUE, prob=c(1/7, 1/7, 1/7, 1/7, 1/7, 2/7))
+head(dado_cargado, 10)
+```
+Se calculan la frecuencias absolutas de cada valor.
+```{r}
+freqabsc <- as.data.frame(dado_cargado)
+freqabsc %>% 
+  count(dado_cargado)
+```
+
+Se calculan la frecuencias relativas de cada valor. Como se ha podido observar en la tabla anterior es más probable que salga un 6 que otro número. 
+```{r}
+freqabsc %>% 
+  count(dado_cargado) %>%
+  mutate(dado_cargado, relFreq = prop.table(n), n=NULL)
+```
+
+
+
+# Ejercicio 3
+
+Se crean los 3 vectores diferentes con los valores indicados.
+```{r}
+v1=rep(seq(1,4), times=4)
+v1
+```
+```{r}
+v2=rep(seq(1,5), times=c(1,2,3,4,5))
+v2
+```
+
+```{r}
+v3=rep(seq(1,4), times=5)
+v3
+```
+
+
+# Ejercicio 4
+
+Se crea la tabla mpg2 con los parámetros definidos. 
+```{r}
+mpg2 <- mpg %>% 
+  filter(class == 'pickup') %>% 
+  select(starts_with('C'))
+mpg2
+```
+
+
+
+# Ejercicio 5
+```{r}
+census <- read_dta("data/census.dta")
+census
+```
+
+
+**5.1**
+
+Se calculan las poblaciones totales por región. 
+```{r}
+pobreg <- census %>% 
+  group_by(region) %>% 
+  summarise(sumpop=sum(pop))
+pobreg
+```
+
+
+**5.2**
+
+Se grafican los resultados obtenidos en la tabla anterior. 
+```{r}
+pobreg$region <- as.factor(pobreg$region)
+ggplot(data=pobreg, aes(x=region, y=sumpop)) + geom_bar(stat='identity', fill='blue')
+```
+
+
+**5.3**
+
+Se muestra una tabla ordenando los estados según su población total, de más poblado a menos poblado. 
+```{r}
+pobstate <- census %>% 
+  arrange(desc(pop))
+pobstate
+```
+
+
+**5.4**
+
+Se calcula la tasa de divorcios por estado. 
+```{r}
+tdiv <- census %>% 
+  select(state, divorce, marriage) %>% 
+  group_by(state) %>% 
+  mutate(tasa=divorce/marriage)
+tdiv
+```
+
+
+**5.5**
+
+Se calculan la edad media de la población y el porcentaje de personas mayores respecto a la población total por estado. 
+```{r}
+pobage <- census %>% 
+  select(state, medage) %>% 
+  arrange(desc(medage)) %>% 
+  mutate(pobold=census$pop65p/census$pop)
+head(pobage, 10)
+```
+
+
+**5.6**
+
+Se grafican los valores de la media de edad de los estados y la curva de densidad de esta variable. 
+```{r}
+int <- seq(min(census$medage), max(census$medage), length.out=11)
+ggplot(data=census, aes(x=medage))+ geom_histogram(aes(y=stat(density)), breaks=int, fill="blue")+ geom_density(color="red")
+
+```
+
