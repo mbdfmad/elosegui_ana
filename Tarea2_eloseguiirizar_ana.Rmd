@@ -1,0 +1,347 @@
+---
+title: "Master en Big Data. Fundamentos Matemáticos del Análisis de Datos (FMAD)."
+author: "Departamento de Matemática Aplicada"
+date: 'Curso 2021-22. Última actualización: `r format(Sys.time(), "%Y-%m-%d")`'
+output:
+  html_document: default
+  pdf_document: default
+subtitle: Tarea 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instrucciones preliminares
+
++ Empieza abriendo el proyecto de RStudio correspondiente a tu repositorio personal de la asignatura. 
+
++ En todas las tareas tendrás que repetir un proceso como el descrito en la sección *Repite los pasos Creando un fichero Rmarkdown para esta práctica* de la *Práctica00*. Puedes releer la sección *Practicando la entrega de las Tareas* de esa misma práctica para recordar el procedimiento de entrega.
+
+# Preliminares
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(haven)
+library(corrplot)
+```
+
+
+# Ejercicio 1. Simulando variables aleatorias discretas.
+
+**Apartado 1:** La variable aleatoria discreta $X1$ tiene esta tabla de densidad de probabilidad (es la variable que se usa como ejemplo en la Sesión ):
+$$
+\begin{array}{|c|c|c|c|c|c|c|}
+\hline
+\text{valor de }X1 & 0 & 1 & 2 & 3 \\
+\hline
+\text{Probabilidad de ese valor }P(X = x_i) & \dfrac{64}{125} &
+\dfrac{48}{125}& \dfrac{12}{125} & \dfrac{1}{125}\rule{0mm}{6mm} \\[3mm]
+\hline
+\end{array}
+$$
+
+Calcula la media y la varianza teóricas de esta variable.
+
+
+Para estos cálculos se simula una muestra de tamaño 100.
+```{r}
+set.seed(2021)
+valx1=c(0, 1, 2, 3)
+probx1=c(64/125, 48/125, 12/125, 1/125)
+x1=sample(valx1, size=100, replace = TRUE, prob = probx1)
+x1
+```
+
+En el siguiente gráfico se muestran los resultados de la simulación realizada.
+```{r}
+barplot(table(x1), col='peachpuff')
+```
+
+A continuación se calculan la media y la varianza teóricas de esta variable. 
+```{r}
+mediax1=sum(valx1*probx1)
+mediax1
+```
+
+```{r}
+varx1=mediax1-mediax1^2
+varx1
+```
+
+**Apartado 2:**  Combina `sample` con `replicate` para simular cien mil muestras de tamaño 10 de esta variable $X1$. Estudia la distribución de las medias muestrales como hemos hecho en ejemplos previos, ilustrando con gráficas la distribución de esas medias muestrales. Cambia después el tamaño de la muestra a 30 y repite el análisis. 
+
+```{r}
+set.seed(2021)
+mediasMuestrales10 = replicate(100000, { 
+  muestra = sample(valx1, size=10, replace = TRUE, prob = probx1) 
+  mean(muestra)
+})
+head(mediasMuestrales10, 10)
+```
+
+Tras hacer la simulación indicada se obtiene la media muestral. Como se puede observar esta media muestral no difiere mucho de la media teórica obtenida en el apartado anterior. 
+```{r}
+mean(mediasMuestrales10)
+```
+
+A continuación se grafica la densidad de las medias muestrales obtenidas asi como la media muestral calculada. 
+```{r}
+hist(mediasMuestrales10, breaks = 20, main="", 
+     col="peachpuff", probability = TRUE, xlim=range(0:3))
+abline(v = mean(mediasMuestrales10), lty=2, lwd=5, col="blue") 
+```
+
+Como se ha hecho previamente se simula cien mil muestras de la variable x1, esta vez de tamaño 30. 
+```{r}
+set.seed(2021)
+mediasMuestrales30 = replicate(100000, { 
+  muestra = sample(valx1, size=30, replace = TRUE, prob = probx1) 
+  mean(muestra)
+})
+head(mediasMuestrales30, 10)
+```
+
+La media muestral de esta segunda simulación es la siguiente. 
+```{r}
+mean(mediasMuestrales30)
+```
+
+Se puede observar que la diferencia entre la media muestral de tamaño 10 y tamaño 30 no es muy significativa, al igual que la diferencia entre estas dos y la media teórica calculada previamente. 
+
+
+A continuación se muestra el gráfico de densidad de las medias muestrales de tamaño 30 obtenidas. 
+```{r}
+hist(mediasMuestrales30, breaks = 20, main="", 
+     col="peachpuff", probability = TRUE, xlim=range(0:3))
+abline(v = mean(mediasMuestrales30), lty=2, lwd=5, col="blue") 
+```
+
+**Apartado 3:** La variable aleatoria discreta $X2$ tiene esta tabla de densidad de probabilidad:
+$$
+\begin{array}{|c|c|c|c|c|c|}
+\hline
+\text{valor de }X2 & 0 & 1 & 2 \\
+\hline
+\text{Probabilidad de ese valor }P(X = x_i) & \dfrac{1}{2} &
+\dfrac{1}{4}&  \dfrac{1}{4}\rule{0mm}{6mm} \\[3mm]
+\hline
+\end{array}
+$$
+
+Para analizar esta variable se simula una muestra de tamaño 100 y se reprensentan los datos obtenidos en un gráfico de barras. 
+```{r}
+set.seed(2021)
+valx2=c(0, 1, 2)
+probx2=c(1/2, 1/4, 1/4)
+x2=sample(valx2, size=100, replace = TRUE, prob = probx2)
+x2
+```
+```{r}
+barplot(table(x2), col='goldenrod1')
+```
+
+Asimismo se calcula la media teórica de esta variable. 
+```{r}
+mediax2=sum(valx2*probx2)
+mediax2
+```
+
+Suponemos que $X1$ y $X2$ son independientes. ¿Qué valores puede tomar la suma $X1 + X2$? ¿Cuál es su tabla de probabilidad?
+
+
+A continuación se calculan todas las combinaciones posibles entre las dos variables para obtener la probabilidad de la suma de estas dos. La tabla de probabilidades es la siguiente. 
+```{r}
+
+#Suma 0: X1=0 & x2=0
+prob0=probx1[1]*probx2[1]
+
+#Suma 1: X1=0 & x2=1, X1=1 & x2=0
+prob1.1=probx1[1]*probx2[2]
+prob1.2=probx1[2]*probx2[1]
+prob1=sum(prob1.1, prob1.2)
+
+#Suma 2: X1=0 & x2=2, X1=1 & x2=1, X1=2 & x2=0
+prob2.1=probx1[1]*probx2[3]
+prob2.2=probx1[2]*probx2[2]
+prob2.3=probx1[3]*probx2[1]
+prob2=sum(prob2.1, prob2.2, prob2.3)
+
+#Suma 3: X1=1 & x2=2, X1=2 & x2=1, X1=3 & x2=0
+prob3.1=probx1[2]*probx2[3]
+prob3.2=probx1[3]*probx2[2]
+prob3.3=probx1[4]*probx2[1]
+prob3=sum(prob3.1, prob3.2, prob3.3)
+
+#Suma 4: X1=2 & x2=2, X1=3 & x2=1
+prob4.1=probx1[3]*probx2[3]
+prob4.2=probx1[4]*probx2[2]
+prob4=sum(prob4.1, prob4.2)
+
+#Suma 5: X1=3 & x2=2
+prob5=probx1[4]*probx2[3]
+
+tprobsumas <- data.frame(x=c('P suma 0', 'P suma 1', 'P suma 2', 'P suma 3', 'P suma 4', 'P suma 5', 'P total'), y=c(prob0, prob1, prob2, prob3, prob4, prob5, sum(prob0, prob1, prob2, prob3, prob4, prob5))) 
+tprobsumas
+```
+
+**Apartado 4:** Calcula la media teórica de la suma $X_1 + X_2$. Después usa `sample` y `replicate` para simular cien mil *valores* de esta variable suma. Calcula la media de esos valores. *Advertencia:* no es el mismo tipo de análisis que hemos hecho en el segundo apartado. 
+
+
+La media teórica de la suma de estas dos variables es la siguiente. 
+```{r}
+sumamediast=mediax1 + mediax2
+sumamediast
+```
+
+Además se simula cien mil muestras para obtener la media muestral de esta. 
+```{r}
+sumax1x2=replicate (100000,{sample(valx1, 1, replace=TRUE, prob=probx1) + sample(valx2, 1, replace=TRUE, prob=probx2)})
+sumamedias=mean(sumax1x2)
+sumamedias
+```
+Al igual que en los apartados anteriores en los que se han calculado las medias teóricas y las medias muestrales de cada variable, para esta suma también se puede observar que la diferencia entre la media teórica y la media muestral de la suma no difieren significativamente. 
+
+
+# Ejercicio 2. Datos limpios
+
++ Descarga el fichero de este enlace  
+
+[https://gist.githubusercontent.com/fernandosansegundo/471b4887737cfcec7e9cf28631f2e21e/raw/b3944599d02df494f5903740db5acac9da35bc6f/testResults.csv](https://gist.githubusercontent.com/fernandosansegundo/471b4887737cfcec7e9cf28631f2e21e/raw/b3944599d02df494f5903740db5acac9da35bc6f/testResults.csv) 
+
+Se carga el fichero y se muestran las primeras filas de la tabla para ver los datos con los que se está trabajando. 
+```{r}
+file_url <- "https://gist.githubusercontent.com/fernandosansegundo/471b4887737cfcec7e9cf28631f2e21e/raw/b3944599d02df494f5903740db5acac9da35bc6f/testResults.csv"
+local_folder <-  "./data/"
+
+file_name <- tail(unlist(strsplit(file_url, split = "/")), 1)
+localFile <-  paste0(local_folder, file_name)
+if(!file.exists(localFile)){
+  download.file(url = file_url, destfile = localFile)
+} else {
+  warning(paste0("Cuidado: el fichero de datos", localFile, " ya existe."))
+}
+
+testr <- read_csv("./data/testResults.csv")
+head(testr, 10)
+```
++ Este fichero contiene las notas de los alumnos de una clase, que hicieron dos tests cada semana durante cinco semanas. La tabla de datos no cumple los principios de *tidy data* que hemos visto en clase. Tu tarea en este ejercicio es explicar por qué no se cumplen y obtener una tabla de datos limpios con la misma información usando *tidyR*.  
+**Indicación:** lee la ayuda de la función `separate` de *tidyR*.
+
+
+A continuación se crea una columna llamada week (de valor numérico) donde se almacenan los datos de las semanas a las que corresponde cada resultado. 
+```{r}
+library(tidyr)
+testr1 = testr %>% 
+  pivot_longer(5:9, "week") %>% 
+  separate(col = 5, into = c("to_delete", "week"), sep = 4, convert = TRUE) %>%
+  separate(col = 3, into = c("gender", "age"), sep = "_")
+testr1 = testr1[-6]
+head(testr1, 10)
+```
+
+# Ejercicio 3. Lectura de R4DS.
+
+Contnuando con nuestra *lectura conjunta* de este libro, si revisas el índice verás que hemos cubierto (holgadamente en algún caso) el contenido de los Capítulos 6, 8, 9, 10 y 11. Todos esos Capítulos son relativamente ligeros.  Por eso esta semana conviene detenerse un poco en la lectura de los Capítulos 7 y 12, que son los más densos en información. Y como motivación os proponemos un par de ejercicios, uno por cada uno de esos capítulos. 
+
++ Haz el [ejercicio 2 de la Sección 7.5.1.1 de R4DS](https://r4ds.had.co.nz/exploratory-data-analysis.html#exercises-17). Las ideas de esa sección son importantes para nuestro trabajo de las próximas sesiones.
+
+
+Se carga la tabla y se imprimen las 10 primeras líneas para observar los datos con los que se está trabajando. 
+```{r}
+head(diamonds, 10)
+```
+
+A continuación se hace un estudio de la correlación de las variables númericas entre ellas. 
+```{r}
+diamondsnums <- diamonds[,c("carat", "depth", "table", "price", "x", "y", "z")]
+correlacion<-round(cor(diamondsnums), 2)
+	corrplot(correlacion, method="number", type="lower")
+```
+
+En este caso lo que más interesa es saber que variable está más relacionada con el precio de los diamantes, del gráfico anterior se puede afirmar que la variable numérica más relacionada con el precio son los quilates del diamante con un índice de correlación de 0,92. Además entre las dimesiones del diamante (variables x, y, z) y el precio el índice de correlación también es bastante elevado. 
+
+
+Interesa conocer más detalladamente la relación que existe entre los quilates y el precio. 
+```{r}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price))
+```
+
+Como se puede observar en este gráfico en la mayoría de los casos cuanto mayor es el valor del quilate mayor es el precio del diamante. 
+
+
+También interesa conocer la relación que existe entre el corte del diamante y el precio de este. 
+```{r}
+ggplot(data = diamonds, mapping = aes(x = cut, y = price)) +
+  geom_boxplot()
+```
+
+La interpretación que se obtiene de este gráfico es que el corte no está muy relacionado con el precio ya que el precio medio de los diamantes no difiere mucho con los diferentes cortes estudiados. 
+
+
+Para conocer más sobre las características de los diamantes se va a estudiar la relación entre los quilates (variable más correlacionada con el precio) y el corte. 
+```{r}
+ggplot(data = diamonds, mapping = aes(x = cut, y = carat)) +
+  geom_boxplot()
+```
+
+Al igual que en el gráfico anterior la conclusión que se obtiene es que el corte empleado en el diamante no está relacionado con los quilates de este. 
+
++ Haz el [ejercicio 4 de la Sección 12.6.1 de R4DS](https://r4ds.had.co.nz/tidy-data.html#exercises-27). ¡Aprovecha el código previo de esa sección para trabajar con datos limpios!
+
+
+El primer paso en este ejercicio es visualizar los datos y limpiarlos para trabajar cómodamente con ellos. 
+```{r}
+who <- tidyr::who
+head(who, 10)
+```
+```{r}
+who1 = who %>%
+  pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "key", 
+    values_to = "cases", 
+    values_drop_na = TRUE
+  ) %>% 
+  mutate(
+    key = stringr::str_replace(key, "newrel", "new_rel")
+  ) %>%
+  separate(key, c("new", "var", "sexage")) %>% 
+  select(-new, -iso2, -iso3) %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+head(who1, 10)
+```
+
+Una vez se tienen los datos limpios se hace un conteo de los casos de tuberculosis en cada país, cada año y por cada sexo.
+```{r}
+whocount = who1 %>% 
+  group_by(country, year, sex) %>% 
+  summarise(totalcases=sum(cases)) %>% 
+  unite(country_sex, country, sex, remove = FALSE)
+whocount
+```
+
+A continuación se grafican estos datos.
+```{r}
+ggplot(data = whocount, aes(x = year, y = totalcases, group= country_sex, colour = sex)) +
+  geom_line()
+```
+
+Dado que en esta gráfica no se observan suficientemente bien los datos se van a volver a representar estos a partir del año 1995. En la gráfica se observa que los casos en hombres son mayores que en mujeres. 
+```{r}
+whocount %>%
+  filter(year >= 1995) %>%
+  ggplot(aes(x = year, y = totalcases, group= country_sex, colour = sex)) +
+  geom_line()
+```
+
+Para obtener información más detallada se van a observar solo aquellos paises en los que los casos totales son mayores que cien mil. 
+```{r}
+whocount %>%
+  filter(year >= 1995 & totalcases>=100000) %>%
+  ggplot(aes(x = year, y = totalcases, group= country_sex, colour = country)) +
+  geom_line()
+```
+En esta gráfica se observa que los paises que más casos de tuberculosis han tenido en los últimos 20 años han sido India y China. 
